@@ -205,8 +205,8 @@ pub struct OwningRef<O, T: ?Sized> {
 /// Helper trait for an erased concrete type an owner dereferences to.
 /// This is used in form of a trait object for keeping
 /// something around to (virtually) call the destructor.
-pub trait Erased {}
-impl<T> Erased for T {}
+pub trait Erased : Send + Sync {}
+impl<T: Send + Sync> Erased for T {}
 
 /// Helper trait for erasing the concrete type of what an owner derferences to,
 /// for example `Box<T> -> Box<Erased>`. This would be unneeded with
@@ -635,15 +635,15 @@ pub type RwLockReadGuardRef<'a, T, U = T>
 pub type RwLockWriteGuardRef<'a, T, U = T>
     = OwningRef<RwLockWriteGuard<'a, T>, U>;
 
-unsafe impl<'a, T: 'a> IntoErased<'a> for Box<T> {
+unsafe impl<'a, T: 'a + Send + Sync> IntoErased<'a> for Box<T> {
     type Erased = Box<Erased + 'a>;
     fn into_erased(self) -> Self::Erased { self }
 }
-unsafe impl<'a, T: 'a> IntoErased<'a> for Rc<T> {
+unsafe impl<'a, T: 'a + Send + Sync> IntoErased<'a> for Rc<T> {
     type Erased = Rc<Erased + 'a>;
     fn into_erased(self) -> Self::Erased { self }
 }
-unsafe impl<'a, T: 'a> IntoErased<'a> for Arc<T> {
+unsafe impl<'a, T: 'a + Send + Sync> IntoErased<'a> for Arc<T> {
     type Erased = Arc<Erased + 'a>;
     fn into_erased(self) -> Self::Erased { self }
 }
